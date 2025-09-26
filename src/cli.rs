@@ -60,4 +60,46 @@ pub enum Commands {
       /// ID de la tarea a mostrar
       id: u32,
   },
+  
+  /// Actualizar una tarea existente
+  Update {
+      /// ID de la tarea a actualizar
+      id: u32,
+      
+      /// Nuevo título (opcional)
+      #[arg(short, long)]
+      title: Option<String>,
+      
+      /// Nueva descripción (opcional)
+      #[arg(short, long)]
+      description: Option<String>,
+      
+      /// Reemplazar todos los tags con estos nuevos
+      #[arg(long)]
+      tags: Vec<String>,
+  },
+  
+  /// Agregar un tag a una tarea
+  AddTag {
+      /// ID de la tarea
+      id: u32,
+      
+      /// Tag a agregar
+      tag: String,
+  },
+  
+  /// Remover un tag de una tarea
+  RemoveTag {
+      /// ID de la tarea
+      id: u32,
+      
+      /// Tag a remover
+      tag: String,
+  },
+  
+  /// Limpiar todos los tags de una tarea
+  ClearTags {
+      /// ID de la tarea
+      id: u32,
+  },
 }
