@@ -1,1 +1,23 @@
-/target
+# Rust
+/target/
+**/*.rs.bk
+Cargo.lock
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+tasks.json
+*.log
+
+# Backup files
+*~
+*.tmp
+*.bak
