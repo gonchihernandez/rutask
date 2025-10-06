@@ -1,4 +1,5 @@
-use clap::Parser;
+use std::io;
+use clap::Parser; 
 
 // Declarar nuestros módulos
 mod task;
@@ -11,45 +12,100 @@ use storage::{TaskStorage, TaskStats};
 use cli::{Cli, Commands};
 
 fn main() {
-    // Parsear argumentos de línea de comandos
-    let cli = Cli::parse();
+    println!("🦀 RusTask - Interactive Mode");
+    println!("Type 'exit' to quit\n");
     
     // Crear el storage (por ahora en memoria)
     let mut storage = TaskStorage::new();
-    
-    // Ejecutar el comando correspondiente
-    match cli.command {
-        Commands::Add { title, description, tags } => {
-            handle_add(&mut storage, title, description, tags);
-        },
-        Commands::List { completed, pending, tag } => {
-            handle_list(&storage, completed, pending, tag);
-        },
-        Commands::Complete { id } => {
-            handle_complete(&mut storage, id);
-        },
-        Commands::Delete { id } => {
-            handle_delete(&mut storage, id);
-        },
-        Commands::Stats => {
-            handle_stats(&storage);
-        },
-        Commands::Show { id } => {
-            handle_show(&storage, id);
-        },
-        Commands::Update { id, title, description, tags } => {
-            handle_update(&mut storage, id, title, description, tags);
-        },
-        Commands::AddTag { id, tag } => {
-            handle_add_tag(&mut storage, id, tag);
-        },
-        Commands::RemoveTag { id, tag } => {
-            handle_remove_tag(&mut storage, id, tag);
-        },
-        Commands::ClearTags { id } => {
-            handle_clear_tags(&mut storage, id);
-        },
+    loop {
+        println!("\nrustask>");   
+        let mut input = String::new();
+        io::stdin().read_line(&mut input).unwrap();
+        let input = input.trim();   
+
+        if input == "exit" || input.is_empty() {
+            break;
+        }
+        let args = parse_args(input);
+
+        let mut full_args = vec!["rustask".to_string()];
+        full_args.extend(args);
+
+        match Cli::try_parse_from(full_args) {
+          Ok(cli) => {
+              // Ejecutar el comando correspondiente
+              match cli.command {
+                  Commands::Add { title, description, tags } => {
+                      handle_add(&mut storage, title, description, tags);
+                  },
+                  Commands::List { completed, pending, tag } => {
+                      handle_list(&storage, completed, pending, tag);
+                  },
+                  Commands::Complete { id } => {
+                      handle_complete(&mut storage, id);
+                  },
+                  Commands::Delete { id } => {
+                      handle_delete(&mut storage, id);
+                  },
+                  Commands::Stats => {
+                      handle_stats(&storage);
+                  },
+                  Commands::Show { id } => {
+                      handle_show(&storage, id);
+                  },
+                  Commands::Update { id, title, description, tags } => {
+                      handle_update(&mut storage, id, title, description, tags);
+                  },
+                  Commands::AddTag { id, tag } => {
+                      handle_add_tag(&mut storage, id, tag);
+                  },
+                  Commands::RemoveTag { id, tag } => {
+                      handle_remove_tag(&mut storage, id, tag);
+                  },
+                  Commands::ClearTags { id } => {
+                      handle_clear_tags(&mut storage, id);
+                  },
+              }
+          },
+          Err(e) => {
+              println!("❌ Error: {}", e);
+          }
+        }
     }
+}
+
+// Parser simple de comillas (sin dependencias)
+fn parse_args(input: &str) -> Vec<String> {
+    let mut args = Vec::new();
+    let mut current_arg = String::new();
+    let mut in_quotes = false;
+
+    for c in input.chars() {
+        match c {
+            '"' => {
+                // Toggle estado de comillas
+                in_quotes = !in_quotes;
+            }
+            ' ' if !in_quotes => {
+                // Espacio fuera de comillas = separador
+                if !current_arg.is_empty() {
+                    args.push(current_arg.clone());
+                    current_arg.clear();
+                }
+            }
+            _ => {
+                // Cualquier otro carácter se agrega al argumento actual
+                current_arg.push(c);
+            }
+        }
+    }
+
+    // No olvidar el último argumento
+    if !current_arg.is_empty() {
+        args.push(current_arg);
+    }
+
+    args
 }
 
 // Manejar comando: add
@@ -122,7 +178,6 @@ fn handle_delete(storage: &mut TaskStorage, id: u32) {
     }
 }
 
-// Manejar comando: stats
 // Manejar comando: stats
 fn handle_stats(storage: &TaskStorage) {
     let stats: TaskStats = storage.get_stats();
