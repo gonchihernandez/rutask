@@ -1,102 +1,96 @@
-# 🦀 RusTask - Rust Task Manager
+# RusTask
 
-A simple and elegant command-line task manager built with Rust.
+A simple task manager CLI built with Rust. Created as a learning project to understand Rust fundamentals.
 
-![Rust](https://img.shields.io/badge/rust-%23000000.svg?style=for-the-badge&logo=rust&logoColor=white)
-![CLI](https://img.shields.io/badge/CLI-Tool-blue?style=for-the-badge)
-![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
+## What it does
 
-## 🚀 Features
+Manages your tasks from the terminal with an interactive prompt. Tasks are stored in memory during the session - no files or databases needed (for now).
 
-- ✅ **Create tasks** with title, description, and tags
-- 📋 **List tasks** with filters by status and tags
-- ✔️ **Complete tasks** easily
-- 🗑️ **Delete tasks** when no longer needed
-- 🏷️ **Complete tag management** (add, remove, clear)
-- ✏️ **Update existing tasks**
-- 🔍 **View task details**
+## Features
 
-## 📦 Installation
+- Interactive mode - no need to type commands repeatedly
+- Create and manage tasks with titles, descriptions, and tags
+- Filter tasks by status (completed/pending) or by tag
+- Basic CRUD operations (Create, Read, Update, Delete)
+- Built-in quote parsing for multi-word titles
 
-### Prerequisites
+## Getting Started
 
-- [Rust](https://rustup.rs/) 1.70.0 or higher
-
-### From source
+You'll need [Rust](https://rustup.rs/) installed.
 
 ```bash
-# Clone the repository
 git clone https://github.com/gonchihernandez/rustask.git
 cd rustask
-
-# Build
-cargo build --release
-
-# Install (optional)
-cargo install --path .
+cargo run
 ```
 
-## 🛠️ Usage
+## How to use it
 
-### Basic Commands
+Just run `cargo run` and you'll get an interactive prompt:
 
-#### Create a task
+```
+🦀 RusTask - Interactive Mode
+Type 'exit' to quit
+
+rustask>
+```
+
+### Creating tasks
+
 ```bash
 # Simple task
-rustask add "Learn Rust"
+add "Learn Rust"
 
-# Task with description
-rustask add "Exercise" --description "30 minutes of cardio"
+# With description
+add "Exercise" --description "30 min run"
 
-# Task with tags
-rustask add "Buy groceries" --tags shopping --tags urgent
+# With tags
+add "Buy groceries" --tags shopping --tags urgent
 ```
 
-#### List tasks
+### Listing tasks
+
 ```bash
-# All tasks
-rustask list
+# Show all
+list
 
-# Only completed tasks
-rustask list --completed
+# Only completed
+list --completed
 
-# Only pending tasks
-rustask list --pending
+# Only pending
+list --pending
 
 # Filter by tag
-rustask list --tag urgent
+list --tag urgent
 ```
 
-#### Manage status
+### Managing tasks
+
 ```bash
-# Complete a task
-rustask complete 1
+# Mark as done
+complete 1
 
-# View task details
-rustask show 1
+# See details
+show 1
 
-# Delete a task
-rustask delete 1
+# Delete
+delete 1
+
+# See stats
+stats
 ```
 
-### Advanced Commands
+### Working with tags
 
-#### Update tasks
-```bash
-# Change title
-rustask update 1 --title "New title"
-
-# Change description
-rustask update 1 --description "New description"
-
-# Replace all tags
-rustask update 1 --tags work --tags important
-```
-
-#### Manage tags
 ```bash
 # Add a tag
-rustask add-tag 1 urgent
+add-tag 1 important
+
+# Remove a tag
+remove-tag 1 important
+
+# Clear all tags
+clear-tags 1
 
 # Remove a specific tag
 rustask remove-tag 1 urgent
@@ -105,113 +99,105 @@ rustask remove-tag 1 urgent
 rustask clear-tags 1
 ```
 
-#### View statistics
-```bash
-rustask stats
-```
-
-## 📊 Example Usage
+### Update tasks
 
 ```bash
-# Create some tasks
-rustask add "Learn Rust" --tags programming
-rustask add "Exercise" --description "Run 5km" --tags health
-rustask add "Buy groceries" --tags home --tags urgent
+# Change title
+update 1 --title "New title"
 
-# View all tasks
-rustask list
+# Change description  
+update 1 --description "New description"
 
-# Complete a task
-rustask complete 1
-
-# View statistics
-rustask stats
-
-# Filter tasks by tag
-rustask list --tag health
+# Update tags
+update 1 --tags work --tags important
 ```
 
-## 🏗️ Project Architecture
+## Example session
+
+```
+$ cargo run
+
+🦀 RusTask - Interactive Mode
+Type 'exit' to quit
+
+rustask>
+add "Learn Rust" --tags programming
+✅ Tarea creada con ID: 1
+
+rustask>
+add "Exercise" --description "Run 5km" --tags health
+✅ Tarea creada con ID: 2
+
+rustask>
+list
+📋 Lista de tareas:
+
+⏳ [1] Learn Rust [programming]
+⏳ [2] Exercise [health]
+    📄 Run 5km
+
+rustask>
+complete 1
+✅ Tarea 1 marcada como completada
+
+rustask>
+stats
+📊 Estadísticas de tareas:
+   📝 Total: 2
+   ✅ Completadas: 1
+   ⏳ Pendientes: 1
+   🎯 Progreso: 50.0%
+
+rustask>
+exit
+```
+
+## Project structure
 
 ```
 src/
-├── main.rs      # Entry point and command handling
-├── cli.rs       # CLI interface definition with clap
-├── task.rs      # Task structure and business logic
-└── storage.rs   # In-memory storage management
+├── main.rs      - Entry point, interactive loop, command parsing
+├── cli.rs       - Command definitions using clap
+├── task.rs      - Task struct and methods
+└── storage.rs   - In-memory task storage
 ```
 
-### Main Components
+## Tech stack
 
-- **Task**: Structure representing a task with ID, title, description, tags, status, and dates
-- **TaskStorage**: Handles in-memory storage with CRUD operations
-- **CLI**: Command-line interface automatically generated with clap
-- **Handlers**: Functions that connect CLI commands with business logic
+- **clap** - Command-line argument parsing
+- **chrono** - Date/time handling  
+- **serde** - Data serialization (prepared for future persistence)
 
-## 🧰 Dependencies
+## What I learned
 
-- **clap** - CLI argument parsing with derive macros
-- **chrono** - Date and timestamp handling
-- **serde** - Serialization (ready for JSON persistence)
+This project helped me understand:
+- Rust ownership and borrowing
+- Pattern matching
+- Result types and error handling
+- Iterators and closures
+- Writing custom parsers
+- Building CLIs with clap
 
-## 🔮 Future Features
+## Known limitations
 
-- [ ] **JSON Persistence** - Save tasks to file
-- [ ] **Due Dates** - Assign deadlines to tasks
-- [ ] **Priorities** - Priority system (high, medium, low)
-- [ ] **Search** - Search tasks by text
-- [ ] **Export** - Export tasks to different formats
-- [ ] **Reminders** - Notifications for pending tasks
-- [ ] **Projects** - Group tasks by projects
-- [ ] **Configuration** - Customizable configuration file
+- Tasks only exist in memory (lost when you exit)
+- No file persistence yet
+- Single user only
+- No task editing UI (must use commands)
 
-## 🧪 Testing
+## Roadmap
 
-```bash
-# Run tests
-cargo test
+Things I might add:
+- Save/load tasks from JSON file
+- Due dates and priorities
+- Task search
+- Better error messages
+- Configuration file support
 
-# Run with coverage
-cargo test -- --nocapture
-```
+## Contributing
 
-## 🚀 Performance
+Feel free to open issues or submit PRs. This is a learning project, so suggestions are welcome!
 
-- **Fast startup**: < 10ms boot time
-- **Memory efficient**: Minimal RAM usage
-- **Zero-cost abstractions**: Thanks to Rust
-- **Optimized compilation**: Small binary (~2MB)
+## License
 
-## 🤝 Contributing
-
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License. See the `LICENSE` file for details.
-
-## 👨‍💻 Author
-
-**gonchihernandez** - [GitHub](https://github.com/gonchihernandez)
-
-Created with ❤️ using Rust
-
-## 🙏 Acknowledgments
-
-- **Rust Community** - For the amazing ecosystem
-- **clap** - For making CLI parsing so easy
-- **All contributors** - Thanks for making this project better
-
----
-
-⭐ If you like this project, give it a star on GitHub!
-
-## 📚 Additional Resources
-
-- [Rust Documentation](https://doc.rust-lang.org/)
-- [Clap Documentation](https://docs.rs/clap/)
-- [Rust CLI Book](https://rust-cli.github.io/book/)
+MIT License - see LICENSE file for details.
