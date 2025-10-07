@@ -1,3 +1,7 @@
+use std::fs;
+use std::io;
+use std::path::Path;
+
 use crate::task::Task;
 
 // Struct helper para estadísticas
@@ -100,5 +104,35 @@ impl TaskStorage {
             completed,
             pending,
         }
+    }
+
+    pub fn save_to_file(&self, path: &str) -> Result<(), io::Error> {
+        // 1. Serializar las tareas a JSON (formato pretty para que sea legible)
+        let json: String = serde_json::to_string_pretty(&self.tasks)
+            .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+        
+        // 2. Escribir el JSON al archivo
+        fs::write(path, json)?;
+        Ok(())
+      }
+
+    pub fn load_from_file(&mut self, path: &str) -> Result<(), io::Error> {
+      if !Path::new(path).exists() {
+          // Si el archivo no existe, no hay nada que cargar
+          return Ok(());
+      }
+      
+      // 1. Leer el contenido del archivo
+      let data = fs::read_to_string(path)?;
+      
+      // 2. Deserializar el JSON a un vector de tareas
+      let tasks: Vec<Task> = serde_json::from_str(&data)
+          .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+      
+      // 3. Actualizar el almacenamiento con las tareas cargadas
+      self.next_id = tasks.iter().map(|t| t.id).max().unwrap_or(0) + 1;
+      self.tasks = tasks;
+      
+      Ok(())
     }
 }

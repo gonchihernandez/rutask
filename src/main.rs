@@ -11,12 +11,27 @@ use task::Task;
 use storage::{TaskStorage, TaskStats};
 use cli::{Cli, Commands};
 
+const TASKS_FILE: &str = "tasks.json";
+
 fn main() {
     println!("🦀 RusTask - Interactive Mode");
     println!("Type 'exit' to quit\n");
     
-    // Crear el storage (por ahora en memoria)
+    // Crear el storage
     let mut storage = TaskStorage::new();
+    
+    // Cargar tareas del archivo al inicio
+    match storage.load_from_file(TASKS_FILE) {
+        Ok(_) => {
+            let stats = storage.get_stats();
+            if stats.total > 0 {
+                println!("Loaded {} tasks from {}", stats.total, TASKS_FILE);
+            }
+        }
+        Err(e) => {
+            println!("Error: Could not load tasks: {}", e);
+        }
+    }
     loop {
         println!("\nrustask>");   
         let mut input = String::new();
@@ -66,12 +81,19 @@ fn main() {
                       handle_clear_tags(&mut storage, id);
                   },
               }
+
+                // Guardar tareas después de cada comando que modifica el storage
+                if let Err(e) = storage.save_to_file(TASKS_FILE) {
+                    println!("Error : Could not save tasks: {}", e);
+                }
           },
           Err(e) => {
               println!("❌ Error: {}", e);
           }
         }
     }
+    println!("\n💾 Tasks saved to {}", TASKS_FILE);
+    println!("👋 Goodbye!");
 }
 
 // Parser simple de comillas (sin dependencias)
