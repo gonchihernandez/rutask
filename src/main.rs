@@ -29,7 +29,7 @@ fn main() {
             }
         }
         Err(e) => {
-            println!("Error: Could not load tasks: {}", e);
+            eprintln!("Error: Could not load tasks: {}", e);
         }
     }
     loop {
@@ -84,11 +84,11 @@ fn main() {
 
                 // Guardar tareas después de cada comando que modifica el storage
                 if let Err(e) = storage.save_to_file(TASKS_FILE) {
-                    println!("Error : Could not save tasks: {}", e);
+                    eprintln!("Error: Could not save tasks: {}", e);
                 }
           },
           Err(e) => {
-              println!("❌ Error: {}", e);
+              eprintln!("Error: {}", e);
           }
         }
     }
