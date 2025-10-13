@@ -43,13 +43,13 @@ pub enum Commands {
   /// Completar una tarea
   Complete {
       /// ID de la tarea a completar
-      id: u32,
+      id: u64,
   },
   
   /// Eliminar una tarea
   Delete {
       /// ID de la tarea a eliminar
-      id: u32,
+      id: u64,
   },
   
   /// Mostrar estadísticas
@@ -58,13 +58,13 @@ pub enum Commands {
   /// Mostrar detalles de una tarea específica
   Show {
       /// ID de la tarea a mostrar
-      id: u32,
+      id: u64,
   },
   
   /// Actualizar una tarea existente
   Update {
       /// ID de la tarea a actualizar
-      id: u32,
+      id: u64,
       
       /// Nuevo título (opcional)
       #[arg(short, long)]
@@ -82,7 +82,7 @@ pub enum Commands {
   /// Agregar un tag a una tarea
   AddTag {
       /// ID de la tarea
-      id: u32,
+      id: u64,
       
       /// Tag a agregar
       tag: String,
@@ -91,7 +91,7 @@ pub enum Commands {
   /// Remover un tag de una tarea
   RemoveTag {
       /// ID de la tarea
-      id: u32,
+      id: u64,
       
       /// Tag a remover
       tag: String,
@@ -100,6 +100,6 @@ pub enum Commands {
   /// Limpiar todos los tags de una tarea
   ClearTags {
       /// ID de la tarea
-      id: u32,
+      id: u64,
   },
 }

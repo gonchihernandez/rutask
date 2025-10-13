@@ -1,7 +1,6 @@
 use std::fs;
 use std::io;
 use std::path::Path;
-
 use crate::task::Task;
 
 // Struct helper para estadísticas
@@ -15,7 +14,7 @@ pub struct TaskStats {
 #[derive(Debug)]
 pub struct TaskStorage {
     tasks: Vec<Task>,
-    next_id: u32,
+    next_id: u64,
 }
 
 impl TaskStorage {
@@ -26,41 +25,41 @@ impl TaskStorage {
         }
     }
 
-        // Obtener todas las tareas
+    // Obtener todas las tareas
     pub fn get_all_tasks(&self) -> &Vec<Task> {
         &self.tasks
     }
 
-        // Agregar una nueva tarea
-    pub fn add_task(&mut self, mut task: Task) -> u32 {
-        task.id = self.next_id;
-        let id = task.id;
-        self.tasks.push(task);
-        self.next_id += 1;
+    // Agregar una nueva tarea
+    pub fn add_task(&mut self, mut task: Task) -> u64 {
+        task.id = self.next_id;  // Asignamos el ID automáticamente
+        let id = task.id;         // Guardamos el ID para retornarlo
+        self.tasks.push(task);    // Agregamos la tarea al vector
+        self.next_id += 1;        // Incrementamos el contador para la próxima tarea
         id  // Retorna el ID asignado
     }
 
-        // Encontrar una tarea por ID
-    pub fn find_task_by_id(&self, id: u32) -> Option<&Task> {
+    // Encontrar una tarea por ID (retorna una referencia inmutable)
+    pub fn find_task_by_id(&self, id: u64) -> Option<&Task> {
         self.tasks.iter().find(|task| task.id == id)
     }
 
-        // Encontrar una tarea mutable por ID (para modificarla)
-    pub fn find_task_by_id_mut(&mut self, id: u32) -> Option<&mut Task> {
+    // Encontrar una tarea mutable por ID (para modificarla)
+    pub fn find_task_by_id_mut(&mut self, id: u64) -> Option<&mut Task> {
         self.tasks.iter_mut().find(|task| task.id == id)
     }
 
-        // Eliminar una tarea por ID
-    pub fn delete_task(&mut self, id: u32) -> bool {
+    // Eliminar una tarea por ID
+    pub fn delete_task(&mut self, id: u64) -> bool {
         let original_len = self.tasks.len();
-        self.tasks.retain(|task| task.id != id);
+        self.tasks.retain(|task| task.id != id);  // retain() mantiene solo las tareas que NO coinciden con el ID
         self.tasks.len() < original_len  // true si se eliminó algo
     }
 
     // Actualizar una tarea reutilizando find_task_by_id_mut
     pub fn update_task(&mut self, updated_task: Task) -> bool {
         if let Some(task) = self.find_task_by_id_mut(updated_task.id) {
-            *task = updated_task;  // Desreferenciamos para asignar
+            *task = updated_task;  // Desreferenciamos (*) para asignar el nuevo valor
             true
         } else {
             false
@@ -68,7 +67,7 @@ impl TaskStorage {
     }
 
     // Completar una tarea (método de conveniencia)
-    pub fn complete_task(&mut self, id: u32) -> bool {
+    pub fn complete_task(&mut self, id: u64) -> bool {
         if let Some(task) = self.find_task_by_id_mut(id) {
             task.complete();  // Usa el método complete() de Task
             true
@@ -107,14 +106,14 @@ impl TaskStorage {
     }
 
     pub fn save_to_file(&self, path: &str) -> Result<(), io::Error> {
-        // 1. Serializar las tareas a JSON (formato pretty para que sea legible)
-        let json: String = serde_json::to_string_pretty(&self.tasks)
-            .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
-        
-        // 2. Escribir el JSON al archivo
-        fs::write(path, json)?;
-        Ok(())
-      }
+      // 1. Serializar las tareas a JSON (formato pretty para que sea legible)
+      let json: String = serde_json::to_string_pretty(&self.tasks)
+          .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+      
+      // 2. Escribir el JSON al archivo
+      fs::write(path, json)?;
+      Ok(())
+    }
 
     pub fn load_from_file(&mut self, path: &str) -> Result<(), io::Error> {
       if !Path::new(path).exists() {
@@ -130,6 +129,7 @@ impl TaskStorage {
           .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
       
       // 3. Actualizar el almacenamiento con las tareas cargadas
+      // El next_id debe ser mayor que el ID más alto para evitar duplicados
       self.next_id = tasks.iter().map(|t| t.id).max().unwrap_or(0) + 1;
       self.tasks = tasks;
       

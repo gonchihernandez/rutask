@@ -183,7 +183,7 @@ fn handle_list(storage: &TaskStorage, completed: bool, pending: bool, tag: Optio
 }
 
 // Manejar comando: complete
-fn handle_complete(storage: &mut TaskStorage, id: u32) {
+fn handle_complete(storage: &mut TaskStorage, id: u64) {
     if storage.complete_task(id) {
         println!("✅ Tarea {} marcada como completada", id);
     } else {
@@ -192,7 +192,7 @@ fn handle_complete(storage: &mut TaskStorage, id: u32) {
 }
 
 // Manejar comando: delete  
-fn handle_delete(storage: &mut TaskStorage, id: u32) {
+fn handle_delete(storage: &mut TaskStorage, id: u64) {
     if storage.delete_task(id) {
         println!("🗑️ Tarea {} eliminada", id);
     } else {
@@ -216,7 +216,7 @@ fn handle_stats(storage: &TaskStorage) {
 }
 
 // Manejar comando: show
-fn handle_show(storage: &TaskStorage, id: u32) {
+fn handle_show(storage: &TaskStorage, id: u64) {
     if let Some(task) = storage.find_task_by_id(id) {
         let status = if task.is_completed() { "✅ Completada" } else { "⏳ Pendiente" };
         
@@ -243,7 +243,7 @@ fn handle_show(storage: &TaskStorage, id: u32) {
 }
 
 // Manejar comando: update
-fn handle_update(storage: &mut TaskStorage, id: u32, title: Option<String>, description: Option<String>, tags: Vec<String>) {
+fn handle_update(storage: &mut TaskStorage, id: u64, title: Option<String>, description: Option<String>, tags: Vec<String>) {
     if let Some(mut task) = storage.find_task_by_id(id).cloned() {
         // Actualizar campos si se proporcionan
         if let Some(new_title) = title {
@@ -274,7 +274,7 @@ fn handle_update(storage: &mut TaskStorage, id: u32, title: Option<String>, desc
 }
 
 // Manejar comando: add-tag
-fn handle_add_tag(storage: &mut TaskStorage, id: u32, tag: String) {
+fn handle_add_tag(storage: &mut TaskStorage, id: u64, tag: String) {
     if let Some(task) = storage.find_task_by_id_mut(id) {
         task.add_tag(tag.clone());
         println!("🏷️ Tag '{}' agregado a la tarea {}", tag, id);
@@ -284,7 +284,7 @@ fn handle_add_tag(storage: &mut TaskStorage, id: u32, tag: String) {
 }
 
 // Manejar comando: remove-tag
-fn handle_remove_tag(storage: &mut TaskStorage, id: u32, tag: String) {
+fn handle_remove_tag(storage: &mut TaskStorage, id: u64, tag: String) {
     if let Some(task) = storage.find_task_by_id_mut(id) {
         if task.remove_tag(&tag) {
             println!("🗑️ Tag '{}' removido de la tarea {}", tag, id);
@@ -297,7 +297,7 @@ fn handle_remove_tag(storage: &mut TaskStorage, id: u32, tag: String) {
 }
 
 // Manejar comando: clear-tags
-fn handle_clear_tags(storage: &mut TaskStorage, id: u32) {
+fn handle_clear_tags(storage: &mut TaskStorage, id: u64) {
     if let Some(task) = storage.find_task_by_id_mut(id) {
         let tags_count = task.get_tags().len();
         task.clear_tags();

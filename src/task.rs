@@ -9,7 +9,7 @@ pub enum TaskStatus {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Task {
-    pub id: u32,
+    pub id: u64,
     pub title: String,
     pub description: Option<String>,
     pub tags: Vec<String>,
@@ -19,7 +19,7 @@ pub struct Task {
 }
 
 impl Task {
-    pub fn new(id: u32, title: String, description: Option<String>) -> Self {
+    pub fn new(id: u64, title: String, description: Option<String>) -> Self {
         Self {
             id,
             title,
@@ -31,7 +31,7 @@ impl Task {
         }
     }
     
-    pub fn new_with_tags(id: u32, title: String, description: Option<String>, tags: Vec<String>) -> Self {
+    pub fn new_with_tags(id: u64, title: String, description: Option<String>, tags: Vec<String>) -> Self {
         Self {
             id,
             title,
