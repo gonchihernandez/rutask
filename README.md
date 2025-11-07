@@ -4,7 +4,7 @@ A simple task manager CLI built with Rust. Created as a learning project to unde
 
 ## What it does
 
-Manages your tasks from the terminal with an interactive prompt. Tasks are stored in memory during the session - no files or databases needed (for now).
+Manages your tasks from the terminal with an interactive prompt. Tasks are automatically saved to and loaded from a JSON file for persistence across sessions.
 
 ## Features
 
@@ -13,6 +13,10 @@ Manages your tasks from the terminal with an interactive prompt. Tasks are store
 - Filter tasks by status (completed/pending) or by tag
 - Basic CRUD operations (Create, Read, Update, Delete)
 - Built-in quote parsing for multi-word titles
+- Task scheduling - set due dates and times for reminders
+- Smart notifications - automatic reminders for scheduled tasks
+- Snooze functionality - postpone reminders when you're busy
+- JSON persistence - tasks are automatically saved and restored
 
 ## Getting Started
 
@@ -112,6 +116,25 @@ update 1 --description "New description"
 update 1 --tags work --tags important
 ```
 
+### Task scheduling
+
+```bash
+# Schedule a task for a specific date and time
+schedule 1 "06/11/2025 14:30"
+
+# Schedule for a date (defaults to 9:00 AM)
+schedule 1 "07/11/2025"
+
+# View scheduled tasks
+scheduled
+
+# Snooze a reminder (postpone for 10 minutes by default)
+snooze 1
+
+# Snooze for a custom duration
+snooze 1 30
+```
+
 ## Example session
 
 ```
@@ -159,40 +182,41 @@ src/
 ├── main.rs      - Entry point, interactive loop, command parsing
 ├── cli.rs       - Command definitions using clap
 ├── task.rs      - Task struct and methods
-└── storage.rs   - In-memory task storage
+├── storage.rs   - JSON file persistence and in-memory task storage
+└── scheduler.rs - Background task scheduler and reminder system
 ```
 
 ## Tech stack
 
 - **clap** - Command-line argument parsing
-- **chrono** - Date/time handling  
-- **serde** - Data serialization (prepared for future persistence)
+- **chrono** - Date/time handling and scheduling
+- **serde** - Data serialization for JSON persistence
+- **serde_json** - JSON file format for task storage
 
 ## What I learned
 
 This project helped me understand:
 - Rust ownership and borrowing
+- Lifetimes
 - Pattern matching
 - Result types and error handling
 - Iterators and closures
 - Writing custom parsers
 - Building CLIs with clap
-
-## Known limitations
-
-- Tasks only exist in memory (lost when you exit)
-- No file persistence yet
-- Single user only
-- No task editing UI (must use commands)
+- Working with threads and Arc<Mutex<T>> for shared state
+- File I/O and JSON serialization in Rust
+- Building background services and schedulers
 
 ## Roadmap
 
 Things I might add:
-- Save/load tasks from JSON file
-- Due dates and priorities
-- Task search
-- Better error messages
-- Configuration file support
+- MCP Server:
+  - Expose CLI functionality through MCP API for use from MCP hosts
+  - Integration using [Rust MCP SDK](https://github.com/modelcontextprotocol/rust-sdk)
+- Plugins:
+  - Abstract notifications into a `Notifier` trait allowing different notification implementations (macOS notifications, Slack messages, Discord, etc.)
+  - This would exercise trait implementation and crate creation patterns
+
 
 ## Contributing
 
