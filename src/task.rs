@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Local, Utc};
+use chrono::Duration;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum TaskStatus {
@@ -16,6 +17,10 @@ pub struct Task {
     pub status: TaskStatus,
     pub created_at: DateTime<Utc>,
     pub completed_at: Option<DateTime<Utc>>,
+    pub scheduled_for: Option<DateTime<Local>>,
+    pub reminder_sent: bool,
+    pub snoozed_until: Option<DateTime<Local>>,
+    pub snooze_count: u32,
 }
 
 impl Task {
@@ -28,6 +33,10 @@ impl Task {
             status: TaskStatus::Pending,
             created_at: Utc::now(),
             completed_at: None,
+            scheduled_for: None,
+            reminder_sent: false,
+            snoozed_until: None,
+            snooze_count: 0,
         }
     }
     
@@ -40,6 +49,10 @@ impl Task {
             status: TaskStatus::Pending,
             created_at: Utc::now(),
             completed_at: None,
+            scheduled_for: None,
+            reminder_sent: false,
+            snoozed_until: None,
+            snooze_count: 0,
         }
     }
 
@@ -82,5 +95,36 @@ impl Task {
     // Limpiar todos los tags
     pub fn clear_tags(&mut self) {
         self.tags.clear();
+    }
+
+    // Programar un recordatorio
+    pub fn schedule_for(&mut self, datetime: DateTime<Local>) {
+        self.scheduled_for = Some(datetime);
+        self.reminder_sent = false;
+    }
+
+    pub fn snooze(&mut self, minutes: i64) {
+        self.snoozed_until = Some(Local::now() + Duration::minutes(minutes));
+        self.snooze_count += 1;
+    }
+
+    pub fn is_due(&self) -> bool {
+        if let Some(snoozed) = self.snoozed_until {
+            return Local::now() >= snoozed;
+        }
+        
+        if let Some(scheduled) = self.scheduled_for {
+            return Local::now() >= scheduled && !self.reminder_sent;
+        }
+        
+        false
+    }
+
+    pub fn mark_reminder_sent(&mut self) {
+        self.reminder_sent = true;
+    }
+
+    pub fn clear_snooze(&mut self) {
+        self.snoozed_until = None;
     }
 }

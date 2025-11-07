@@ -1,15 +1,18 @@
-use std::io;
+use std::io::{self, Write};
 use clap::Parser; 
 
 // Declarar nuestros módulos
 mod task;
 mod storage;
 mod cli;
+mod scheduler;
 
 // Imports de nuestros módulos
-use task::Task;
-use storage::{TaskStorage, TaskStats};
+use std::sync::{Arc, Mutex};
 use cli::{Cli, Commands};
+use storage::{TaskStorage, TaskStats};
+use scheduler::Scheduler;
+use task::Task;
 
 const TASKS_FILE: &str = "tasks.json";
 
@@ -17,83 +20,121 @@ fn main() {
     println!("🦀 RusTask - Interactive Mode");
     println!("Type 'exit' to quit\n");
     
-    // Crear el storage
-    let mut storage = TaskStorage::new();
+    // Crear el storage con Arc<Mutex> para compartirlo con el scheduler
+    let storage: Arc<Mutex<TaskStorage>> = Arc::new(Mutex::new(TaskStorage::new()));
     
     // Cargar tareas del archivo al inicio
-    match storage.load_from_file(TASKS_FILE) {
-        Ok(_) => {
-            let stats = storage.get_stats();
-            if stats.total > 0 {
-                println!("Loaded {} tasks from {}", stats.total, TASKS_FILE);
+    {
+        let mut storage_lock = storage.lock().unwrap();
+        match storage_lock.load_from_file(TASKS_FILE) {
+            Ok(_) => {
+                let stats = storage_lock.get_stats();
+                if stats.total > 0 {
+                    println!("📂 Cargadas {} tareas desde {}", stats.total, TASKS_FILE);
+                }
+            }
+            Err(e) => {
+                eprintln!("⚠️ Error al cargar tareas: {}", e);
             }
         }
-        Err(e) => {
-            eprintln!("Error: Could not load tasks: {}", e);
-        }
     }
+    
+    // Iniciar el scheduler
+    let scheduler = Scheduler::new(Arc::clone(&storage));
+    scheduler.start();
+    
     loop {
-        println!("\nrustask>");   
+        print!("\nrustask> ");
+        io::stdout().flush().unwrap();
+        
         let mut input = String::new();
         io::stdin().read_line(&mut input).unwrap();
         let input = input.trim();   
 
-        if input == "exit" || input.is_empty() {
+        if input.is_empty() {
+            continue;
+        }
+
+        if input == "exit" || input == "quit" {
+            // Detener el scheduler
+            scheduler.stop();
+            
+            // Guardar tareas antes de salir
+            let storage_lock = storage.lock().unwrap();
+            if let Err(e) = storage_lock.save_to_file(TASKS_FILE) {
+                eprintln!("⚠️ Error al guardar tareas: {}", e);
+            } else {
+                println!("\n💾 Tareas guardadas en {}", TASKS_FILE);
+            }
+            println!("👋 ¡Hasta luego!");
             break;
         }
+        
         let args = parse_args(input);
-
         let mut full_args = vec!["rustask".to_string()];
         full_args.extend(args);
 
         match Cli::try_parse_from(full_args) {
           Ok(cli) => {
-              // Ejecutar el comando correspondiente
-              match cli.command {
-                  Commands::Add { title, description, tags } => {
-                      handle_add(&mut storage, title, description, tags);
-                  },
-                  Commands::List { completed, pending, tag } => {
-                      handle_list(&storage, completed, pending, tag);
-                  },
-                  Commands::Complete { id } => {
-                      handle_complete(&mut storage, id);
-                  },
-                  Commands::Delete { id } => {
-                      handle_delete(&mut storage, id);
-                  },
-                  Commands::Stats => {
-                      handle_stats(&storage);
-                  },
-                  Commands::Show { id } => {
-                      handle_show(&storage, id);
-                  },
-                  Commands::Update { id, title, description, tags } => {
-                      handle_update(&mut storage, id, title, description, tags);
-                  },
-                  Commands::AddTag { id, tag } => {
-                      handle_add_tag(&mut storage, id, tag);
-                  },
-                  Commands::RemoveTag { id, tag } => {
-                      handle_remove_tag(&mut storage, id, tag);
-                  },
-                  Commands::ClearTags { id } => {
-                      handle_clear_tags(&mut storage, id);
-                  },
+              handle_command(cli.command, &storage);
+              
+              // Guardar tareas después de cada comando
+              let storage_lock = storage.lock().unwrap();
+              if let Err(e) = storage_lock.save_to_file(TASKS_FILE) {
+                  eprintln!("⚠️ Error al guardar tareas: {}", e);
               }
-
-                // Guardar tareas después de cada comando que modifica el storage
-                if let Err(e) = storage.save_to_file(TASKS_FILE) {
-                    eprintln!("Error: Could not save tasks: {}", e);
-                }
           },
           Err(e) => {
-              eprintln!("Error: {}", e);
+              eprintln!("{}", e);
           }
         }
     }
-    println!("\n💾 Tasks saved to {}", TASKS_FILE);
-    println!("👋 Goodbye!");
+}
+
+fn handle_command(command: Commands, storage: &Arc<Mutex<TaskStorage>>) {
+    let mut storage = storage.lock().unwrap();
+
+    match command {
+        Commands::Add { title, description, tags } => {
+            handle_add(&mut storage, title, description, tags);
+        },
+        Commands::List { completed, pending, tag } => {
+            handle_list(&storage, completed, pending, tag);
+        },
+        Commands::Complete { id } => {
+            handle_complete(&mut storage, id);
+        },
+        Commands::Delete { id } => {
+            handle_delete(&mut storage, id);
+        },
+        Commands::Stats => {
+            handle_stats(&storage);
+        },
+        Commands::Show { id } => {
+            handle_show(&storage, id);
+        },
+        Commands::Update { id, title, description, tags } => {
+            handle_update(&mut storage, id, title, description, tags);
+        },
+        Commands::AddTag { id, tag } => {
+            handle_add_tag(&mut storage, id, tag);
+        },
+        Commands::RemoveTag { id, tag } => {
+            handle_remove_tag(&mut storage, id, tag);
+        },
+        Commands::ClearTags { id } => {
+            handle_clear_tags(&mut storage, id);
+        },
+        Commands::Schedule { id, datetime } => {
+            handle_schedule(&mut storage, id, datetime);
+        },
+        Commands::Snooze { id, minutes } => {
+            handle_snooze(&mut storage, id, minutes);
+        },
+        Commands::Scheduled => {
+            handle_scheduled(&storage);
+        },
+    }
 }
 
 // Parser simple de comillas (sin dependencias)
@@ -146,18 +187,20 @@ fn handle_add(storage: &mut TaskStorage, title: String, description: Option<Stri
 
 // Manejar comando: list  
 fn handle_list(storage: &TaskStorage, completed: bool, pending: bool, tag: Option<String>) {
-    let tasks = if completed && !pending {
+    let all_tasks = storage.get_all_tasks();
+    
+    let tasks: Vec<&Task> = if completed && !pending {
         // Solo completadas
-        storage.get_tasks_by_status(true)
+        all_tasks.iter().filter(|t| t.is_completed()).collect()
     } else if pending && !completed {
         // Solo pendientes
-        storage.get_tasks_by_status(false)
-    } else if let Some(tag_filter) = tag {
+        all_tasks.iter().filter(|t| !t.is_completed()).collect()
+    } else if let Some(ref tag_filter) = tag {
         // Filtrar por tag
-        storage.find_tasks_by_tag(&tag_filter)
+        all_tasks.iter().filter(|t| t.has_tag(tag_filter)).collect()
     } else {
         // Todas las tareas
-        storage.get_all_tasks().iter().collect()
+        all_tasks.iter().collect()
     };
     
     if tasks.is_empty() {
@@ -304,5 +347,53 @@ fn handle_clear_tags(storage: &mut TaskStorage, id: u64) {
         println!("🧹 {} tags removidos de la tarea {}", tags_count, id);
     } else {
         println!("❌ No se encontró una tarea con ID {}", id);
+    }
+}
+
+// Manejar comando: schedule
+fn handle_schedule(storage: &mut TaskStorage, id: u64, datetime: chrono::DateTime<chrono::Local>) {
+    if let Some(task) = storage.find_task_by_id_mut(id) {
+        task.schedule_for(datetime);
+        println!("⏰ Tarea {} programada para {}", id, datetime.format("%d/%m/%Y %H:%M"));
+    } else {
+        println!("❌ No se encontró una tarea con ID {}", id);
+    }
+}
+
+// Manejar comando: snooze
+fn handle_snooze(storage: &mut TaskStorage, id: u64, minutes: i64) {
+    if storage.snooze_task(id, minutes) {
+        println!("⏸️ Tarea {} pospuesta por {} minutos", id, minutes);
+    } else {
+        println!("❌ No se encontró una tarea con ID {}", id);
+    }
+}
+
+// Manejar comando: scheduled
+fn handle_scheduled(storage: &TaskStorage) {
+    let tasks: Vec<_> = storage.get_scheduled_tasks().collect();
+    
+    if tasks.is_empty() {
+        println!("📅 No hay tareas programadas");
+    } else {
+        println!("📅 Tareas programadas:\n");
+        for task in tasks {
+            let status = if task.is_completed() { "✅" } else { "⏳" };
+            print!("{} [{}] {}", status, task.id, task.title);
+            
+            if let Some(scheduled) = task.scheduled_for {
+                print!(" - 🕐 {}", scheduled.format("%d/%m/%Y %H:%M"));
+            }
+            
+            if let Some(snoozed) = task.snoozed_until {
+                print!(" (⏸️ hasta {})", snoozed.format("%H:%M"));
+            }
+            
+            if !task.get_tags().is_empty() {
+                print!(" [{}]", task.get_tags().join(", "));
+            }
+            
+            println!();
+        }
     }
 }

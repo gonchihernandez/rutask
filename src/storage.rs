@@ -77,19 +77,18 @@ impl TaskStorage {
     }
 
     // Obtener tareas por estado
-    pub fn get_tasks_by_status(&self, completed: bool) -> Vec<&Task> {
+    pub fn get_tasks_by_status(&self, completed: bool) -> impl Iterator<Item=&Task> {
         self.tasks
             .iter()
-            .filter(|task| task.is_completed() == completed)
-            .collect()
+            .filter(move |task| task.is_completed() == completed)
     }
 
-    // Buscar tareas por tag
-    pub fn find_tasks_by_tag(&self, tag: &str) -> Vec<&Task> {
+    // Buscar tareas por tag usando a lifetime para evitar problemas de referencia
+    // hacemos que implemente ambos Traits: 'a e Iterator
+    pub fn list_tasks_by_tag<'a>(&'a self, tag: &'a str) -> impl Iterator<Item = &'a Task> + 'a {
         self.tasks
             .iter()
-            .filter(|task| task.has_tag(tag))
-            .collect()
+            .filter(move |t| t.has_tag(tag))
     }
 
     // Obtener estadísticas
@@ -134,5 +133,27 @@ impl TaskStorage {
       self.tasks = tasks;
       
       Ok(())
+    }
+
+    // Obtener tareas mutables (necesario para el scheduler)
+    pub fn get_all_tasks_mut(&mut self) -> &mut Vec<Task> {
+        &mut self.tasks
+    }
+
+    // Obtener tareas programadas
+    pub fn get_scheduled_tasks(&self) -> impl Iterator<Item = &Task> {
+        self.tasks
+            .iter()
+            .filter(|t| !t.is_completed() && t.scheduled_for.is_some())
+    }
+
+    // Aplicar snooze a una tarea
+    pub fn snooze_task(&mut self, id: u64, minutes: i64) -> bool {
+        if let Some(task) = self.find_task_by_id_mut(id) {
+            task.snooze(minutes);
+            true
+        } else {
+            false
+        }
     }
 }

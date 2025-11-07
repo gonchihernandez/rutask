@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand};
+use chrono::NaiveDateTime;
 
 #[derive(Parser)]
 #[command(name = "rustask")]
@@ -102,4 +103,44 @@ pub enum Commands {
       /// ID de la tarea
       id: u64,
   },
+
+      /// Programar una tarea para una fecha/hora específica
+    Schedule {
+        /// ID de la tarea
+        id: u64,
+        
+        /// Fecha y hora (formato: "DD/MM/YYYY HH:MM" o "DD/MM/YYYY")
+        #[arg(value_parser = parse_datetime)]
+        datetime: chrono::DateTime<chrono::Local>,
+    },
+
+    /// Posponer un recordatorio
+    Snooze {
+        /// ID de la tarea
+        id: u64,
+        
+        /// Minutos para posponer (default: 10)
+        #[arg(default_value = "10")]
+        minutes: i64,
+    },
+
+    /// Listar tareas programadas
+    Scheduled
+}
+
+fn parse_datetime(s: &str) -> Result<chrono::DateTime<chrono::Local>, String> {
+    use chrono::{Local, TimeZone};
+    
+    // Intentar formato con hora
+    if let Ok(dt) = NaiveDateTime::parse_from_str(s, "%d/%m/%Y %H:%M") {
+        return Ok(Local.from_local_datetime(&dt).unwrap());
+    }
+    
+    // Intentar formato solo fecha (usar 09:00 por defecto)
+    if let Ok(date) = chrono::NaiveDate::parse_from_str(s, "%d/%m/%Y") {
+        let dt = date.and_hms_opt(9, 0, 0).unwrap();
+        return Ok(Local.from_local_datetime(&dt).unwrap());
+    }
+    
+    Err(format!("Formato de fecha inválido. Use: DD/MM/YYYY HH:MM o DD/MM/YYYY"))
 }
