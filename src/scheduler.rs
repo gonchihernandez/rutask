@@ -90,19 +90,86 @@ impl Scheduler {
         println!("   💡 Usa 'snooze {}' para posponer", task.id);
         println!("═══════════════════════════════════\n");
         
-        // En sistemas Unix, también podemos usar notify-rust para notificaciones del sistema
+        // Enviar notificación del sistema en macOS
         #[cfg(target_os = "macos")]
         {
-            use std::process::Command;
-            let _ = Command::new("osascript")
-                .args(&[
-                    "-e",
-                    &format!(
-                        "display notification \"{}\" with title \"RusTask Reminder\"",
-                        task.title
-                    ),
-                ])
-                .output();
+            Self::send_macos_notification(task);
+        }
+    }
+    
+    // Envía notificaciones nativas de macOS usando terminal-notifier
+    #[cfg(target_os = "macos")]
+    fn send_macos_notification(task: &crate::task::Task) {
+        use std::process::Command;
+        
+        // Construir el mensaje de la notificacion
+        let mut message = task.title.clone();
+        if let Some(desc) = &task.description {
+            message.push_str("\n");
+            message.push_str(desc);
+        }
+        
+        // Ejecutar terminal-notifier para mostrar la notificacion
+        let result = Command::new("terminal-notifier")
+            .args(&[
+                "-title", "🦀 RusTask",
+                "-subtitle", "Recordatorio de Tarea",
+                "-message", &message,
+                "-sound", "Glass",
+                "-sender", "com.apple.Terminal",
+            ])
+            .output();
+        
+        // Verificar si la notificacion se envió correctamente
+        match result {
+            Ok(output) if output.status.success() => {
+                println!("✅ Notificación enviada");
+            }
+            Ok(output) => {
+                eprintln!("⚠️ Error al enviar notificación: {}", 
+                         String::from_utf8_lossy(&output.stderr));
+            }
+            Err(e) => {
+                eprintln!("⚠️ terminal-notifier no disponible: {}", e);
+                eprintln!("   Instala con: brew install terminal-notifier");
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    #[cfg(target_os = "macos")]
+    fn test_macos_notification() {
+        use std::process::Command;
+        
+        println!("🧪 Probando notificación de macOS...");
+        
+        let result = Command::new("terminal-notifier")
+            .args(&[
+                "-title", "RusTask Test",
+                "-message", "Esta es una notificación de prueba",
+                "-sound", "Glass",
+                "-sender", "com.apple.Terminal",
+            ])
+            .output();
+        
+        match result {
+            Ok(output) if output.status.success() => {
+                println!("✅ Notificación enviada exitosamente");
+                println!("   Deberías ver una notificación en la esquina superior derecha");
+            }
+            Ok(output) => {
+                println!("❌ Error al enviar notificación");
+                println!("   stderr: {}", String::from_utf8_lossy(&output.stderr));
+                panic!("La notificación falló");
+            }
+            Err(e) => {
+                println!("❌ Error ejecutando terminal-notifier: {}", e);
+                println!("   Instala con: brew install terminal-notifier");
+                panic!("No se pudo ejecutar terminal-notifier");
+            }
         }
     }
 }

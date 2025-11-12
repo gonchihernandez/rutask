@@ -28,6 +28,16 @@ cd rustask
 cargo run
 ```
 
+### macOS Notifications (Optional)
+
+For native macOS notifications, install terminal-notifier:
+
+```bash
+brew install terminal-notifier
+```
+
+Without it, you'll still get terminal notifications for scheduled tasks.
+
 ## How to use it
 
 Just run `cargo run` and you'll get an interactive prompt:
@@ -210,12 +220,24 @@ This project helped me understand:
 ## Roadmap
 
 Things I might add:
-- MCP Server:
+- ✅ ~~Save/load tasks from JSON file~~ (Completed!)
+- ✅ ~~Due dates and scheduling~~ (Completed!)
+- ✅ ~~macOS native notifications~~ (Completed!)
+- Task priorities and sorting
+- Task search functionality
+- Better error messages and validation
+- Configuration file support
+- Task categories/projects
+- Recurring tasks
+- Export to different formats
+- Web interface or desktop app
+- **MCP Server:**
   - Expose CLI functionality through MCP API for use from MCP hosts
   - Integration using [Rust MCP SDK](https://github.com/modelcontextprotocol/rust-sdk)
-- Plugins:
-  - Abstract notifications into a `Notifier` trait allowing different notification implementations (macOS notifications, Slack messages, Discord, etc.)
+- **Plugins system:**
+  - Abstract notifications into a `Notifier` trait allowing different notification implementations (Slack, Discord, email, etc.)
   - This would exercise trait implementation and crate creation patterns
+  - Currently using `terminal-notifier` directly for macOS
 
 
 ## Contributing
