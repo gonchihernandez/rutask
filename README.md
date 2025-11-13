@@ -220,17 +220,6 @@ This project helped me understand:
 ## Roadmap
 
 Things I might add:
-- ✅ ~~Save/load tasks from JSON file~~ (Completed!)
-- ✅ ~~Due dates and scheduling~~ (Completed!)
-- ✅ ~~macOS native notifications~~ (Completed!)
-- Task priorities and sorting
-- Task search functionality
-- Better error messages and validation
-- Configuration file support
-- Task categories/projects
-- Recurring tasks
-- Export to different formats
-- Web interface or desktop app
 - **MCP Server:**
   - Expose CLI functionality through MCP API for use from MCP hosts
   - Integration using [Rust MCP SDK](https://github.com/modelcontextprotocol/rust-sdk)
